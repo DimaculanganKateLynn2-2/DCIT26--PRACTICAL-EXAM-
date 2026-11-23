@@ -3,6 +3,7 @@ import { useState } from "react";
 import SymptomChecker from "./pages/SymptomChecker";
 import SafetyToxins from "./pages/SafetyToxins";
 import MyPets from "./pages/MyPets";
+import HealthHistory from "./pages/HealthHistory";
 
 function App() {
   const [page, setPage] = useState("Home");
@@ -12,6 +13,7 @@ const navigation = [
   "Symptom Checker",
   "Safety & Toxins",
   "My Pets",
+  "Health History",
   "About Us",
 ];
 
@@ -200,7 +202,9 @@ const navigation = [
   <SafetyToxins />
 ) : page === "My Pets" ? (
   <MyPets />
-) : (
+) : page === "Health History" ? (
+    <HealthHistory />
+    ) : (
         <main className="mx-auto min-h-[60vh] max-w-7xl px-6 py-12">
 
           <section className="rounded-3xl bg-white p-10 shadow-sm">
