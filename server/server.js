@@ -35,18 +35,25 @@ app.use('/api/reports', requireAuth, pdfRoutes);
 app.use('/api/ai', requireAuth, requireCsrf, aiRoutes);
 app.use('/api/clinics', requireAuth, clinicRoutes);
 if (process.env.NODE_ENV === 'production') {
-  const distFolder = path.join(__dirname, '..', 'client', 'dist');
+  const frontendDir = path.join(__dirname, '..', 'client', 'dist');
 
-  app.use(express.static(distFolder));
+  app.use(express.static(frontendDir));
 
-  app.get(/.*/, (req, res, next) => {
-    if (req.path.startsWith('/api') || !req.accepts('html')) {
+  app.use((req, res, next) => {
+    if (
+      req.method !== 'GET' ||
+      req.path === '/api' ||
+      req.path.startsWith('/api/') ||
+      path.extname(req.path) ||
+      !req.accepts('html')
+    ) {
       return next();
     }
 
-    return res.sendFile(path.join(distFolder, 'index.html'));
+    return res.sendFile(path.join(frontendDir, 'index.html'));
   });
 }
+
 
 app.use((_req, res) => res.status(404).json({ message: 'Route not found.' }));
 app.use((error, _req, res, _next) => {
