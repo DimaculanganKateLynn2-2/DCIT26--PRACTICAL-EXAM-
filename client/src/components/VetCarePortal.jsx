@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import VetCareIcon from './VetCareIcon';
 import { useAuth } from '../context/AuthContext';
 import MyPets from '../pages/MyPets';
 import SymptomChecker from '../pages/SymptomChecker';
@@ -6,14 +7,17 @@ import HealthHistory from '../pages/HealthHistory';
 import SafetyToxins from '../pages/SafetyToxins';
 import Dashboard from '../pages/Dashboard';
 import AIPetAssistant from '../pages/AIPetAssistant';
+import NearbyVetClinics from '../pages/NearbyVetClinics';
+import AccountSettings from '../pages/AccountSettings';
+import { UserRound, ChevronDown, LogOut } from 'lucide-react';
 
 const publicPages = ['Home', 'About Us', 'Services', 'How It Works', 'Safety & Toxins'];
-const privatePages = ['Dashboard', 'My Pets', 'Symptom Assessment', 'AI Pet Assistant', 'Health History', 'Safety & Toxins', 'My Account'];
+const privatePages = ['Dashboard', 'My Pets', 'Symptom Assessment', 'AI Pet Assistant', 'Health History', 'Safety & Toxins', 'Nearby Veterinary Clinics'];
 
 function Brand({ onClick }) {
   return (
     <button type="button" onClick={onClick} className="flex items-center gap-2 text-xl font-bold text-green-900">
-      <span aria-hidden="true">🐾</span> VetCare Meadow
+      <VetCareIcon name="paw" size={22} /> VetCare Meadow
     </button>
   );
 }
@@ -104,17 +108,17 @@ function PublicPage({ page, goTo }) {
     <section className="mx-auto max-w-4xl px-5 py-14">
       <h1 className="text-4xl font-bold text-green-900">About VetCare Meadow</h1>
       <p className="mt-5 text-lg text-gray-700">VetCare Meadow is an academic web application for pet profile management, owner-reported health observations, and educational guidance for dog and cat owners.</p>
-      <p className="mt-4 text-gray-600">The platform does not replace veterinary diagnosis or treatment. AI guidance is educational, and clinic search is planned for a later phase.</p>
+      <p className="mt-4 text-gray-600">The platform does not replace veterinary diagnosis or treatment. AI guidance is educational, and veterinary clinic search is available to registered users.</p>
     </section>
   );
   if (page === 'Services') return (
     <section className="mx-auto max-w-5xl px-5 py-14">
       <h1 className="text-4xl font-bold text-green-900">Our Services</h1>
-      <p className="mt-3 text-gray-600">Start with these working features. AI-assisted symptom guidance and general pet-care questions are available after login; map features are still in development.</p>
+      <p className="mt-3 text-gray-600">Start with these working features. AI-assisted symptom guidance and general pet-care questions are available after login; clinic map search is available after login.</p>
       <div className="mt-8 grid gap-4 md:grid-cols-2">
-        {[['🐾', 'Pet Profile Management', 'Create, update, and organize multiple pets.'], ['🩺', 'AI Symptom Assessment', 'Record observations and request educational AI guidance.'], ['🤖', 'AI Pet Assistant', 'Ask general educational dog and cat care questions.'], ['📋', 'Health History', 'Save and revisit the observations associated with each pet.'], ['🛡️', 'Safety & Toxins', 'Browse educational safety information and warning signs.']].map(([icon, title, detail]) => (
+        {[['paw', 'Pet Profile Management', 'Create, update, and organize multiple pets.'], ['stethoscope', 'AI Symptom Assessment', 'Record observations and request educational AI guidance.'], ['bot', 'AI Pet Assistant', 'Ask general educational dog and cat care questions.'], ['clipboard', 'Health History', 'Save and revisit the observations associated with each pet.'], ['shield', 'Safety & Toxins', 'Browse educational safety information and warning signs.']].map(([icon, title, detail]) => (
           <div key={title} className="rounded-2xl bg-white p-6 shadow-sm">
-            <span className="text-3xl" aria-hidden="true">{icon}</span>
+            <span className="vetcare-feature-icon"><VetCareIcon name={icon} size={25} /></span>
             <h2 className="mt-3 text-xl font-bold text-green-900">{title}</h2>
             <p className="mt-2 text-gray-600">{detail}</p>
           </div>
@@ -138,42 +142,39 @@ function PublicPage({ page, goTo }) {
   );
   return (
     <main>
-      <section className="bg-gradient-to-br from-green-50 to-emerald-100 px-5 py-20">
-        <div className="mx-auto max-w-5xl">
-          <p className="font-bold text-green-700">🐾 PET HEALTH & WELLNESS</p>
+      <section className="vetcare-home-hero bg-gradient-to-br from-green-50 to-emerald-100 px-5 py-16 sm:py-20">
+        <div className="mx-auto max-w-5xl vetcare-hero-grid">
+          <div className="vetcare-hero-copy">
+          <p className="flex items-center gap-2 font-bold text-green-700"><VetCareIcon name="paw" size={18} /> PET HEALTH & WELLNESS</p>
           <h1 className="mt-3 max-w-3xl text-4xl font-extrabold leading-tight text-green-950 sm:text-6xl">Every little paw deserves thoughtful care.</h1>
           <p className="mt-5 max-w-2xl text-lg text-green-900/80">Organize pet profiles, keep a history of your observations, and explore educational pet safety information in one place.</p>
           <div className="mt-8 flex flex-wrap gap-3">
-            <button onClick={() => goTo('Register')} className="rounded-xl bg-green-700 px-6 py-3 font-bold text-white hover:bg-green-800">Get Started</button>
+            <button onClick={() => goTo('Register')} className="inline-flex items-center gap-2 rounded-xl bg-green-700 px-6 py-3 font-bold text-white hover:bg-green-800">Get Started <VetCareIcon name="arrow" size={17} /></button>
             <button onClick={() => goTo('How It Works')} className="rounded-xl border border-green-700 bg-white px-6 py-3 font-semibold text-green-900 hover:bg-green-50">How It Works</button>
           </div>
+          </div>
+          <figure className="vetcare-hero-photo">
+            <img
+              src="https://images.pexels.com/photos/28852102/pexels-photo-28852102/free-photo-of-dog-and-cat-standing-together-in-nature.jpeg?auto=compress&dpr=1&h=750&w=1260"
+              alt="Real photograph of a dog and a cat standing outdoors together"
+              loading="lazy"
+              decoding="async"
+              onError={(event) => { event.currentTarget.style.visibility = 'hidden'; }}
+            />
+            <figcaption>Photo: Alex Jaison / Pexels</figcaption>
+          </figure>
         </div>
       </section>
       <section className="mx-auto grid max-w-5xl gap-4 px-5 py-12 md:grid-cols-3">
         {[
-          ['🐶', 'Multiple Pets', 'One account for your dog and cat profiles.'],
-          ['📋', 'Observation History', 'Organized owner-reported health notes.'],
-          ['🛡️', 'Safety First', 'Educational information and emergency reminders.'],
+          ['paw', 'Multiple Pets', 'One account for your dog and cat profiles.'],
+          ['clipboard', 'Observation History', 'Organized owner-reported health notes.'],
+          ['shield', 'Safety First', 'Educational information and emergency reminders.'],
         ].map(([icon, title, text]) => (
-          <article key={title} className="rounded-2xl bg-white p-6 shadow-sm"><div className="text-3xl">{icon}</div><h2 className="mt-3 text-xl font-bold text-green-900">{title}</h2><p className="mt-2 text-gray-600">{text}</p></article>
+          <article key={title} className="rounded-2xl bg-white p-6 shadow-sm"><span className="vetcare-feature-icon"><VetCareIcon name={icon} size={25} /></span><h2 className="mt-3 text-xl font-bold text-green-900">{title}</h2><p className="mt-2 text-gray-600">{text}</p></article>
         ))}
       </section>
     </main>
-  );
-}
-
-function AccountPage({ user, logout, busy, error }) {
-  return (
-    <section className="mx-auto max-w-3xl px-5 py-12">
-      <h1 className="text-3xl font-bold text-green-900">My Account</h1>
-      <div className="mt-6 rounded-2xl bg-white p-6 shadow-sm">
-        <p className="text-sm text-gray-500">Account name</p><p className="mt-1 font-semibold">{user.name}</p>
-        <p className="mt-5 text-sm text-gray-500">Email address</p><p className="mt-1 font-semibold">{user.email}</p>
-        <p className="mt-5 text-sm text-gray-500">Profile editing and password changes will be added in a later phase.</p>
-        <button type="button" onClick={logout} disabled={busy} className="mt-6 rounded-lg bg-green-700 px-5 py-3 font-semibold text-white hover:bg-green-800 disabled:opacity-50">Log Out</button>
-        {error && <p role="alert" className="mt-3 text-red-700">{error}</p>}
-      </div>
-    </section>
   );
 }
 
@@ -228,7 +229,15 @@ export default function VetCarePortal() {
               <button key={item} type="button" onClick={() => setPage(item)} aria-current={page === item ? 'page' : undefined}
                 className={`rounded-lg px-3 py-2 text-sm font-semibold ${page === item ? 'bg-green-100 text-green-900' : 'text-gray-700 hover:bg-green-50'}`}>{item}</button>
             ))}
-            <button type="button" onClick={handleLogout} disabled={logoutBusy} className="rounded-lg bg-green-800 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">Log Out</button>
+            <details className="relative ml-1">
+              <summary className="flex cursor-pointer list-none items-center gap-2 rounded-xl border border-green-200 bg-green-50 px-3 py-2 text-sm font-semibold text-green-900 hover:bg-green-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-green-700">
+                <UserRound size={17} aria-hidden="true" /> Account <ChevronDown size={15} aria-hidden="true" />
+              </summary>
+              <div className="absolute right-0 z-50 mt-2 w-48 rounded-xl border border-green-100 bg-white p-2 shadow-lg">
+                <button type="button" onClick={() => setPage('My Account')} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-medium text-green-900 hover:bg-green-50"><UserRound size={16}/> My Account</button>
+                <button type="button" onClick={handleLogout} disabled={logoutBusy} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-medium text-red-800 hover:bg-red-50 disabled:opacity-50"><LogOut size={16}/> {logoutBusy ? 'Logging out...' : 'Log Out'}</button>
+              </div>
+            </details>
           </div>
         </nav>
       </header>
@@ -237,9 +246,10 @@ export default function VetCarePortal() {
       {page === 'My Pets' && <MyPets />}
       {page === 'Symptom Assessment' && <SymptomChecker />}
       {page === 'AI Pet Assistant' && <AIPetAssistant />}
+      {page === 'Nearby Veterinary Clinics' && <NearbyVetClinics />}
       {page === 'Health History' && <HealthHistory />}
       {page === 'Safety & Toxins' && <SafetyToxins />}
-      {page === 'My Account' && <AccountPage user={user} logout={handleLogout} busy={logoutBusy} error={logoutError} />}
+      {page === 'My Account' && <AccountSettings />}
       <footer className="border-t border-green-100 bg-white px-5 py-5 text-center text-sm text-gray-600">VetCare Meadow · Academic prototype · Observations are not veterinary diagnoses.</footer>
     </div>
   );

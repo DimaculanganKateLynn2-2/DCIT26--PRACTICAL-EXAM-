@@ -1,3 +1,4 @@
+import HazardIcon from '../components/HazardIcon';
 
 import { useState } from "react";
 
@@ -324,7 +325,7 @@ function SafetyToxins() {
                   >
                     <div className="flex items-start gap-4">
                       <div className="rounded-xl bg-green-50 p-4 text-4xl">
-                        {toxin.icon}
+                        <HazardIcon symbol={toxin.icon} />
                       </div>
 
                       <div>

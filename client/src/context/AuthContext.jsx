@@ -26,7 +26,10 @@ export function AuthProvider({ children }) {
   async function register(name, email, password) { setUser(await registerAccount({ name, email, password })); }
   async function logout() { await logoutAccount(); setUser(null); }
 
-  return <AuthContext.Provider value={{ user, loading, login, register, logout }}>{children}</AuthContext.Provider>;
+  function updateCurrentUser(nextUser) { setUser(previous => previous ? { ...previous, ...nextUser } : previous); }
+  function endLocalSession() { setCsrfToken(null); setUser(null); }
+
+  return <AuthContext.Provider value={{ user, loading, login, register, logout, updateCurrentUser, endLocalSession }}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {

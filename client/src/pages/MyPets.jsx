@@ -1,3 +1,4 @@
+import PetSpeciesIcon from '../components/PetSpeciesIcon';
 
 import { useEffect, useState } from "react";
 import {
@@ -261,7 +262,7 @@ function MyPets() {
                       }`}
                     >
                       <div className="text-3xl">
-                        {type === "Dog" ? "🐶" : "🐱"}
+                        <PetSpeciesIcon species={type} />
                       </div>
                       <span className="font-semibold text-green-900">
                         {type}
@@ -403,7 +404,7 @@ function MyPets() {
                   >
                     <div className="mb-5 flex items-center gap-4">
                       <div className="rounded-2xl bg-green-50 p-4 text-4xl">
-                        {pet.species === "Dog" ? "🐶" : "🐱"}
+                        <PetSpeciesIcon species={pet.species} />
                       </div>
 
                       <div>
