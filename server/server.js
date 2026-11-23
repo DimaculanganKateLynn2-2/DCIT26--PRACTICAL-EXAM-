@@ -11,6 +11,7 @@ const healthRecordRoutes = require('./routes/healthRecordRoutes');
 const pdfRoutes = require('./routes/pdfRoutes');
 const aiRoutes = require('./routes/aiRoutes');
 const clinicRoutes = require('./routes/clinicRoutes');
+const path = require('node:path');
 
 const app = express();
 const PORT = Number(process.env.PORT) || 5000;
@@ -33,6 +34,26 @@ app.use('/api/health-records', requireAuth, requireCsrf, healthRecordRoutes);
 app.use('/api/reports', requireAuth, pdfRoutes);
 app.use('/api/ai', requireAuth, requireCsrf, aiRoutes);
 app.use('/api/clinics', requireAuth, clinicRoutes);
+if (process.env.NODE_ENV === 'production') {
+  const frontendDir = path.join(__dirname, '..', 'client', 'dist');
+
+  app.use(express.static(frontendDir));
+
+  app.use((req, res, next) => {
+    if (
+      req.method !== 'GET' ||
+      req.path === '/api' ||
+      req.path.startsWith('/api/') ||
+      path.extname(req.path) ||
+      !req.accepts('html')
+    ) {
+      return next();
+    }
+
+    return res.sendFile(path.join(frontendDir, 'index.html'));
+  });
+}
+
 
 app.use((_req, res) => res.status(404).json({ message: 'Route not found.' }));
 app.use((error, _req, res, _next) => {
