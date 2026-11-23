@@ -155,3 +155,23 @@ vite.config.ts.timestamp-*
 .nx/cache
 .nx/workspace-data
 .nx/migrate-runs
+
+# Dependencies
+node_modules/
+
+# Secret environment files
+.env
+.env.*
+!.env.example
+
+# Build output
+dist/
+
+# Debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Operating system files
+.DS_Store
+Thumbs.db
