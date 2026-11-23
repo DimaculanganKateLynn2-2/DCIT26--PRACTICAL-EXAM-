@@ -1,33 +1,50 @@
 import { useState } from 'react';
-import { downloadVisitSummary } from '../services/healthRecordApi';
+import { getHealthRecordPdf } from '../services/pdfApi';
 
-export default function PdfDownloadButton({ recordId }) {
-  const [busy, setBusy] = useState(false);
+function safeName(name) {
+  const cleaned = String(name || 'pet').trim().replace(/[^a-zA-Z0-9_-]+/g, '-').slice(0, 40);
+  return cleaned || 'pet';
+}
+
+export default function PdfDownloadButton({ recordId, petName = 'pet' }) {
+  const [downloading, setDownloading] = useState(false);
   const [error, setError] = useState('');
 
   async function download() {
-    setBusy(true); setError('');
+    if (!recordId || downloading) return;
+    setDownloading(true);
+    setError('');
     try {
-      const blob = await downloadVisitSummary(recordId);
+      const blob = await getHealthRecordPdf(recordId);
+      if (!blob || !blob.size || !blob.type.includes('pdf')) {
+        throw new Error('The server did not return a valid PDF.');
+      }
       const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `vetcare-visit-summary-${recordId}.pdf`;
-      document.body.append(link);
-      link.click();
-      link.remove();
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
-    } catch (err) { setError(err.message || 'Could not download summary.'); }
-    finally { setBusy(false); }
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `VetCare-${safeName(petName)}-Visit-Summary.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 3000);
+    } catch (err) {
+      setError(err.message || 'Could not download PDF.');
+    } finally {
+      setDownloading(false);
+    }
   }
 
   return (
-    <div className="mt-3">
-      <button type="button" onClick={download} disabled={busy}
-        className="w-full rounded-xl border border-green-300 bg-white px-5 py-3 font-semibold text-green-800 hover:bg-green-100 disabled:opacity-50">
-        {busy ? 'Preparing PDF…' : '📄 Download Vet Visit Summary (PDF)'}
+    <span className="inline-flex flex-col items-start gap-1">
+      <button
+        type="button"
+        disabled={!recordId || downloading}
+        onClick={download}
+        className="rounded-lg border border-green-600 px-4 py-2 font-semibold text-green-800 hover:bg-green-50 disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        {downloading ? 'Preparing PDF...' : '📄 Download Vet Summary PDF'}
       </button>
-      {error && <p role="alert" className="mt-2 text-sm text-red-700">{error}</p>}
-    </div>
+      {error && <span role="alert" className="max-w-72 text-sm text-red-700">{error}</span>}
+    </span>
   );
 }

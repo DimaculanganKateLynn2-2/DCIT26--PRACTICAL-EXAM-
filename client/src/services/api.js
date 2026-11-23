@@ -1,4 +1,4 @@
-const API_BASE = 'http://localhost:5000';
+const API_BASE = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000').replace(/\/$/, '');
 let csrfToken = null;
 
 export function setCsrfToken(token) {
@@ -6,16 +6,17 @@ export function setCsrfToken(token) {
 }
 
 export async function apiRequest(path, options = {}) {
-  const method = (options.method || 'GET').toUpperCase();
-  const headers = { ...options.headers };
+  const { asBlob = false, ...fetchOptions } = options;
+  const method = (fetchOptions.method || 'GET').toUpperCase();
+  const headers = { ...(fetchOptions.headers || {}) };
   if (!['GET', 'HEAD'].includes(method) && csrfToken) headers['X-CSRF-Token'] = csrfToken;
-  if (options.body && !(options.body instanceof FormData)) headers['Content-Type'] = 'application/json';
-
+  if (fetchOptions.body && !(fetchOptions.body instanceof FormData)) {
+    headers['Content-Type'] = 'application/json';
+  }
   const response = await fetch(`${API_BASE}${path}`, {
-    ...options, method, headers, credentials: 'include',
+    ...fetchOptions, method, headers, credentials: 'include',
   });
-
-  if (options.asBlob && response.ok) return response.blob();
+  if (asBlob && response.ok) return response.blob();
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
     const error = new Error(data.message || `Request failed (${response.status})`);

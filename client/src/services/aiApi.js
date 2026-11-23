@@ -1,16 +1,11 @@
 import { apiRequest } from './api';
 
-export function getAiGuidance(observation) {
-  return apiRequest('/api/ai/symptoms', {
-    method: 'POST',
-    body: JSON.stringify({
-      petId: observation.petId || undefined,
-      species: observation.petType,
-      age: observation.petAge === 'Not provided' ? null : observation.petAge,
-      symptoms: observation.symptoms,
-      duration: observation.duration,
-      notes: observation.notes || '',
-      consent: true,
-    }),
-  });
+export function runAiAssessment(observation) {
+  return apiRequest('/api/ai/assessment', { method: 'POST', body: JSON.stringify({ ...observation, consent: true }) });
+}
+export function saveAiAssessment(draftId) {
+  return apiRequest(`/api/ai/assessment/${encodeURIComponent(draftId)}/save`, { method: 'POST' });
+}
+export function sendPetAssistant(messages) {
+  return apiRequest('/api/ai/assistant', { method: 'POST', body: JSON.stringify({ messages, consent: true }) });
 }

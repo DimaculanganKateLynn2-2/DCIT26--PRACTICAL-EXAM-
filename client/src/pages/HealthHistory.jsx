@@ -1,307 +1,68 @@
+import { useEffect, useState } from 'react';
+import { getHealthRecords, deleteHealthRecord } from '../services/healthRecordApi';
+import PdfDownloadButton from '../components/PdfDownloadButton';
 
-import { useEffect, useState } from "react";
-
-import {
-  getHealthRecords,
-  deleteHealthRecord,
-} from "../services/healthRecordApi";
-
-function HealthHistory() {
+function ReportList({ title, items }) {
+  if (!Array.isArray(items) || items.length === 0) return null;
+  return <div className="mt-4"><h4 className="font-semibold text-green-900">{title}</h4><ul className="mt-2 list-inside list-disc space-y-1 text-sm text-gray-700">{items.map((text, i) => <li key={i} className="break-words">{text}</li>)}</ul></div>;
+}
+export default function HealthHistory() {
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [deletingId, setDeletingId] = useState(null);
-  const [refreshKey, setRefreshKey] = useState(0);
+  const [error, setError] = useState('');
+  const [petFilter, setPetFilter] = useState('all');
+  const [expandedId, setExpandedId] = useState('');
+  const [deletingId, setDeletingId] = useState('');
+  const [refresh, setRefresh] = useState(0);
 
-  // Load health records from MongoDB
   useEffect(() => {
     const controller = new AbortController();
-
-    async function loadRecords() {
-      setLoading(true);
-
-      try {
-        const data = await getHealthRecords(
-          controller.signal
-        );
-
-        if (!Array.isArray(data)) {
-          throw new Error("Invalid server response.");
-        }
-
-        if (!controller.signal.aborted) {
-          setRecords(data);
-          setError("");
-        }
-      } catch (err) {
-        if (!controller.signal.aborted) {
-          setError(
-            err.message || "Failed to load health records."
-          );
-        }
-      } finally {
-        if (!controller.signal.aborted) {
-          setLoading(false);
-        }
-      }
-    }
-
-    loadRecords();
-
+    setLoading(true);
+    getHealthRecords(controller.signal)
+      .then(items => { if (!controller.signal.aborted) { setRecords(Array.isArray(items) ? items : []); setError(''); } })
+      .catch(err => { if (!controller.signal.aborted && err.name !== 'AbortError') setError(err.message || 'Could not load health history.'); })
+      .finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => controller.abort();
-  }, [refreshKey]);
-
-  // Delete a health record
-  async function handleDelete(record) {
-    const confirmed = window.confirm(
-      "Are you sure you want to delete this health record?"
-    );
-
-    if (!confirmed) return;
-
-    setDeletingId(record._id);
-    setError("");
-
+  }, [refresh]);
+  const pets = [...new Map(records.filter(r => r.pet?._id).map(r => [r.pet._id, r.pet])).values()];
+  const filtered = records.filter(r => petFilter === 'all' || r.pet?._id === petFilter);
+  async function remove(id) {
+    if (!window.confirm('Delete this observation permanently?')) return;
+    setDeletingId(id); setError('');
     try {
-      await deleteHealthRecord(record._id);
-
-      setRecords((previous) =>
-        previous.filter(
-          (item) => item._id !== record._id
-        )
-      );
-    } catch (err) {
-      setError(
-        err.message || "Failed to delete health record."
-      );
-    } finally {
-      setDeletingId(null);
-    }
+      await deleteHealthRecord(id);
+      setRecords(prev => prev.filter(r => r._id !== id));
+    } catch (err) { setError(err.message || 'Could not delete the record.'); }
+    finally { setDeletingId(''); }
   }
-
-  function formatDate(value) {
-    if (!value) return "Unknown date";
-
-    const date = new Date(value);
-
-    if (Number.isNaN(date.getTime())) {
-      return "Unknown date";
-    }
-
-    return date.toLocaleString("en-PH", {
-      dateStyle: "medium",
-      timeStyle: "short",
-    });
-  }
-
-  return (
-    <main className="min-h-screen bg-green-50 px-5 py-10">
-      <div className="mx-auto max-w-6xl">
-
-        {/* PAGE HEADER */}
-        <section className="mb-8">
-          <span className="font-semibold text-green-700">
-            🐾 PET HEALTH MONITORING
-          </span>
-
-          <h1 className="mt-3 text-4xl font-bold text-green-900">
-            Pet Health History
-          </h1>
-
-          <p className="mt-3 text-gray-600">
-            Review previously recorded symptoms,
-            health observations, and important notes
-            about your pets.
-          </p>
-        </section>
-
-        {/* INFORMATION NOTICE */}
-        <section className="mb-8 rounded-2xl border border-amber-200 bg-amber-50 p-5">
-          <h2 className="font-bold text-amber-900">
-            Important Reminder
-          </h2>
-
-          <p className="mt-2 text-sm text-amber-800">
-            Health history records are based on
-            user-reported observations. They are not
-            veterinary diagnoses. If your pet is showing
-            emergency warning signs, seek immediate
-            veterinary attention.
-          </p>
-        </section>
-
-        {/* HEALTH HISTORY SECTION */}
-        <section className="rounded-3xl bg-white p-7 shadow-sm">
-
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <h2 className="text-2xl font-bold text-green-900">
-                Recorded Health Observations
-              </h2>
-
-              <p className="mt-2 text-gray-500">
-                Saved records from MongoDB.
-              </p>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <span className="rounded-full bg-green-100 px-4 py-2 text-sm font-semibold text-green-800">
-                {records.length} Records
-              </span>
-
-              <button
-                type="button"
-                onClick={() =>
-                  setRefreshKey((previous) => previous + 1)
-                }
-                disabled={loading}
-                className="rounded-xl bg-green-700 px-5 py-3 font-semibold text-white hover:bg-green-800 disabled:opacity-50"
-              >
-                Refresh
-              </button>
-            </div>
-          </div>
-
-          {/* ERROR */}
-          {error && (
-            <div
-              role="alert"
-              className="mt-6 rounded-xl border border-red-200 bg-red-50 p-4 text-red-700"
-            >
-              {error}
-            </div>
-          )}
-
-          {/* LOADING */}
-          {loading ? (
-            <div className="py-16 text-center">
-              <p role="status" className="text-gray-500">
-                Loading health records...
-              </p>
-            </div>
-          ) : records.length === 0 ? (
-            <div className="py-16 text-center">
-              <div className="text-6xl">📋</div>
-
-              <h3 className="mt-5 text-xl font-bold text-green-900">
-                No Health Records Found
-              </h3>
-
-              <p className="mt-3 text-gray-500">
-                No saved observations are available.
-                Records will appear here once created.
-              </p>
-            </div>
-          ) : (
-            <div className="mt-7 grid gap-5 md:grid-cols-2">
-
-              {records.map((record) => (
-                <article
-                  key={record._id}
-                  className="rounded-2xl border border-green-100 bg-green-50 p-6"
-                >
-
-                  {/* PET NAME */}
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <h3 className="text-xl font-bold text-green-900">
-                        🐾 {record.pet?.name || "Pet Unavailable"}
-                      </h3>
-
-                      <p className="mt-1 text-sm text-gray-500">
-                        {record.pet?.species || "Unknown Pet Type"}
-                      </p>
-                    </div>
-
-                    <span className="rounded-full bg-white px-3 py-2 text-xs font-medium text-green-800">
-                      {formatDate(record.createdAt)}
-                    </span>
-                  </div>
-
-                  {/* SYMPTOMS */}
-                  <div className="mt-6">
-                    <h4 className="font-bold text-green-900">
-                      Observed Symptoms
-                    </h4>
-
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {(record.symptoms || []).map(
-                        (symptom, index) => (
-                          <span
-                            key={`${symptom}-${index}`}
-                            className="rounded-full bg-white px-3 py-2 text-sm text-green-800"
-                          >
-                            {symptom}
-                          </span>
-                        )
-                      )}
-                    </div>
-                  </div>
-
-                  {/* DURATION */}
-                  <div className="mt-5">
-                    <h4 className="font-bold text-green-900">
-                      Symptom Duration
-                    </h4>
-
-                    <p className="mt-2 text-gray-700">
-                      {record.duration}
-                    </p>
-                  </div>
-
-                  {/* NOTES */}
-                  <div className="mt-5">
-                    <h4 className="font-bold text-green-900">
-                      Observation Notes
-                    </h4>
-
-                    <p className="mt-2 whitespace-pre-wrap break-words text-gray-700">
-                      {record.notes || "No additional notes."}
-                    </p>
-                  </div>
-
-                  {/* EMERGENCY FLAG */}
-                  {record.emergencyFlag && (
-                    <div className="mt-5 rounded-xl border border-red-200 bg-red-50 p-4">
-                      <h4 className="font-bold text-red-800">
-                        🚨 Emergency Warning Sign Recorded
-                      </h4>
-
-                      <p className="mt-2 text-sm text-red-700">
-                        A predefined emergency symptom
-                        was selected for this observation.
-                        If it is occurring now, seek
-                        emergency veterinary care.
-                      </p>
-                    </div>
-                  )}
-
-                  {/* DELETE BUTTON */}
-                  <button
-                    type="button"
-                    disabled={deletingId !== null}
-                    onClick={() => handleDelete(record)}
-                    className="mt-6 w-full rounded-xl border border-red-200 bg-red-50 px-5 py-3 font-semibold text-red-700 hover:bg-red-100 disabled:opacity-50"
-                  >
-                    {deletingId === record._id
-                      ? "Deleting..."
-                      : "🗑 Delete Record"}
-                  </button>
-                </article>
-              ))}
-            </div>
-          )}
-        </section>
-
-        <p className="mt-8 text-center text-sm text-gray-500">
-          Development version: use synthetic test data only.
-          User authentication and record ownership protection
-          will be added before public deployment.
-        </p>
-
-      </div>
-    </main>
-  );
+  return <main className="mx-auto max-w-5xl px-5 py-10">
+    <h1 className="text-4xl font-bold text-green-900">Pet Health History</h1>
+    <p className="mt-3 text-gray-600">Review owner-reported observations and previously saved AI educational guidance. These are not veterinarian-confirmed medical records.</p>
+    <div className="mt-6 flex flex-wrap items-end justify-between gap-3 rounded-2xl bg-white p-5 shadow-sm">
+      <div><label htmlFor="history-pet" className="block font-semibold text-green-900">Select a pet</label><select id="history-pet" value={petFilter} onChange={e => setPetFilter(e.target.value)} className="mt-2 min-w-48 rounded-lg border border-gray-300 p-3"><option value="all">All registered pets</option>{pets.map(p => <option key={p._id} value={p._id}>{p.name}</option>)}</select></div>
+      <button type="button" onClick={() => setRefresh(n => n + 1)} disabled={loading} className="rounded-lg bg-green-700 px-5 py-3 font-semibold text-white disabled:opacity-50">Refresh Records</button>
+    </div>
+    {loading && <p role="status" className="mt-6 text-gray-600">Loading health records...</p>}
+    {error && <p role="alert" className="mt-6 rounded-xl bg-red-50 p-4 text-red-700">{error}</p>}
+    {!loading && filtered.length === 0 && <p className="mt-6 rounded-xl bg-white p-6 text-gray-600">No observations saved for this selection yet.</p>}
+    <div className="mt-6 space-y-5">{filtered.map(record => {
+      const report = record.aiReport;
+      const expanded = expandedId === record._id;
+      return <article key={record._id} className="rounded-2xl border border-green-100 bg-white p-6 shadow-sm">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div><h2 className="text-xl font-bold text-green-900">🐾 {record.petSnapshot?.name || record.pet?.name || 'Registered Pet'}</h2><p className="mt-1 text-sm text-gray-500">{record.createdAt ? new Date(record.createdAt).toLocaleString() : 'Date unavailable'}</p><p className="mt-2 text-gray-700">{record.symptoms?.join(', ') || 'No listed symptoms'}</p></div>
+          <span className={`rounded-full px-3 py-1 text-sm font-bold ${record.emergencyFlag || report?.urgency === 'High' ? 'bg-red-50 text-red-800' : 'bg-green-50 text-green-800'}`}>{report ? `AI urgency: ${report.urgency}` : record.emergencyFlag ? 'Emergency sign' : 'Observation only'}</span>
+        </div>
+        <div className="mt-5 flex flex-wrap gap-3">
+          <PdfDownloadButton recordId={record._id} petName={record.petSnapshot?.name || record.pet?.name || 'pet'} /><button type="button" onClick={() => setExpandedId(expanded ? '' : record._id)} className="rounded-lg border border-green-600 px-4 py-2 font-semibold text-green-900">{expanded ? 'Hide Details' : 'View Details'}</button><button type="button" disabled={deletingId === record._id} onClick={() => remove(record._id)} className="rounded-lg border border-red-300 px-4 py-2 font-semibold text-red-700 disabled:opacity-50">{deletingId === record._id ? 'Deleting...' : 'Delete'}</button></div>
+        {expanded && <div className="mt-5 border-t border-gray-100 pt-5">
+          <p><strong>Duration:</strong> {record.duration}</p>
+          {record.petSnapshot && <p className="mt-2"><strong>Pet at assessment:</strong> {record.petSnapshot.species} · {record.petSnapshot.breed || 'Unknown breed'} · {record.petSnapshot.age} years · {record.petSnapshot.sex}</p>}
+          {record.symptomDetails?.length > 0 && <div className="mt-3"><strong>Severity (owner-reported):</strong><ul className="mt-2 list-inside list-disc">{record.symptomDetails.map((s, i) => <li key={i}>{s.name}: {s.severity}</li>)}</ul></div>}
+          {record.notes && <p className="mt-3 whitespace-pre-wrap break-words"><strong>Owner notes:</strong> {record.notes}</p>}
+          {report ? <section className="mt-5 rounded-xl bg-green-50 p-5"><h3 className="text-lg font-bold text-green-900">AI Educational Guidance · {report.urgency} urgency</h3><p className="mt-1 text-sm text-gray-600">Not a diagnosis. Generated using {record.aiModel || 'Gemini'}.</p><ReportList title="Possible concerns" items={report.possibleConcerns} /><ReportList title="Explanations" items={report.explanations} /><ReportList title="Next steps" items={report.nextSteps} /><ReportList title="Warning signs" items={report.warningSigns} /><ReportList title="Questions for the veterinarian" items={report.questionsForVet} /><p className="mt-5 text-xs text-green-950">{report.disclaimer || 'Educational guidance only, not professional veterinary advice.'}</p></section> : <p className="mt-4 text-sm text-gray-500">This is an observation-only record. No AI report was generated.</p>}
+        </div>}
+      </article>;
+    })}</div>
+  </main>;
 }
-
-export default HealthHistory;

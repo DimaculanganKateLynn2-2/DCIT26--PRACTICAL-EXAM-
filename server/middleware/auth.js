@@ -53,7 +53,8 @@ function requireCsrf(req, res, next) {
   if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) return next();
   const supplied = req.get('X-CSRF-Token');
   const expected = req.session?.csrfToken;
-  if (!supplied || !expected || supplied.length !== expected.length) {
+  if (typeof supplied !== 'string' || !/^[a-f0-9]{64}$/.test(supplied) ||
+      typeof expected !== 'string' || !/^[a-f0-9]{64}$/.test(expected)) {
     return res.status(403).json({ message: 'Missing or invalid CSRF token.' });
   }
   const a = Buffer.from(supplied);
